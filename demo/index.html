@@ -1,0 +1,94 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+    <title>download-item Demo</title>
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <link rel="import" href="../download-item.html">
+  </head>
+  <body>
+
+    <p>An example of <code>&lt;download-item&gt;</code>:</p>
+
+    <button id="start">Start Download</button>
+    <button id="fail">Fail Download</button>
+    <!-- <button >Start</button> -->
+
+    <download-item
+      item='{"id":"XhTNgjCGf",
+            "filename":"SomeFile",
+            "url":"http://link.co/",
+            "status":"Completed",
+            "image":"../img/folder.png"}'></download-item>
+
+    <script>
+      // As this doesn't actually have any backend we are just going to
+      // increment it like this
+      var downloading = 0;
+      var item = document.querySelector('download-item');
+      function changeItemStatus(status, isDownloading) {
+        itemObject.status = status;
+        downloading = isDownloading;
+        document.querySelector('download-item')
+          .setAttribute("item", JSON.stringify(itemObject));
+      }
+      function startDownload()
+      {
+        if(downloading)
+        {
+          if((item.getAttribute('value')<100)) {
+            console.log(item.getAttribute('value'));
+            item.setAttribute('value',parseInt(item.getAttribute('value'))+1);
+            setTimeout(function(){startDownload();},30);
+          }
+          else {
+            changeItemStatus("Completed", 0);
+          }
+        }
+      }
+      var itemObject = {id:"XhTNgjCGf", filename:"SomeFile", url:"http://link.co/", status:"Downloading", image:"../img/folder.png"};
+      function changeItemStatus(status, isDownloading) {
+        itemObject.status = status;
+        downloading = isDownloading;
+        item.setAttribute("item", JSON.stringify(itemObject));
+      }
+      document.querySelector('#start').addEventListener('click', function() {
+        changeItemStatus("Downloading", 1);
+        item.setAttribute("value", 0);
+          startDownload();
+      });
+      document.querySelector('#fail').addEventListener('click', function() {
+        changeItemStatus("Failed", 0);
+      });
+      item.addEventListener('resume', function() {
+        changeItemStatus("Downloading", 1);
+        startDownload();
+      });
+      item.addEventListener('pause', function() {
+        changeItemStatus("Paused", 0);
+      });
+      item.addEventListener('cancel', function() {
+        changeItemStatus("Canceled", 0);
+      });
+      item.addEventListener('retry', function() {
+        changeItemStatus("Downloading", 1);
+        startDownload();
+      });
+      item.addEventListener('remove', function() {
+        downloading = 0;
+        item.parentNode.removeChild(item);
+      });
+    </script>
+
+  </body>
+</html>
