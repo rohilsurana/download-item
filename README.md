@@ -1,7 +1,15 @@
 # download-item
 
 An element providing a ui and controls like pause, resume and retry for
-a item downloading in the backend
+a item downloading in the backend.
+You can use the HTML5 persistence storage and other available FileSystem APIs
+to create a downloader backend for this to work with browsers.
+For installation -
+
+    bower install rohilsurana/download-item
+
+For documentation and example have a look at
+[download-item](http://rohilsurana.github.io/download-item/)
 
 
 ## Dependencies

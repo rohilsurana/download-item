@@ -1,11 +1,7 @@
+<!DOCTYPE html>
 <!--
 @license
-Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
-This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
-The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
-The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
-Code distributed by Google as part of the polymer project is also
-subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+MIT
 -->
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="../font-roboto/roboto.html">
@@ -27,11 +23,11 @@ whic can be used to attach listeners for controlling downloading in the backend.
 Example:
 
     <download-item
-      item='{"id":"XhTNgjCGf",
-            "filename":"SomeFile",
-            "url":"http://link.co/",
-            "status":"Downloading",
-            "image":"img/folder.png"}'></download-item>
+      status = 'Downloading'
+      item = '{"id":"XhTNgjCGf",
+              "filename":"SomeFile",
+              "url":"http://link.co/",
+              "image":"../img/folder.png"}'></download-item>
 
 @demo
 -->
@@ -173,43 +169,43 @@ Example:
           <span class="flex name" on-click="_fireOpen">
             <a class="name" href="#">{{item.filename}}</a>
           </span>
-          <template is="dom-if" if="{{isFailed(item.status)}}">
-            <span class="tag">{{item.status}}</span>
+          <template is="dom-if" if="{{isFailed(status)}}">
+            <span class="tag">{{status}}</span>
           </template>
         </div>
         <a href="{{item.url}}" class="url">{{item.url}}</a>
         <!-- TODO: Add description below like speed etc. -->
-        <template is="dom-if" if="{{isDownloading(item.status)}}">
-          <div class="description">{{item.status}}</div>
+        <template is="dom-if" if="{{isDownloading(status)}}">
+          <div class="description">{{status}}</div>
         </template>
-        <template is="dom-if" if="{{isPaused(item.status)}}">
-          <div class="description">{{item.status}}</div>
+        <template is="dom-if" if="{{isPaused(status)}}">
+          <div class="description">{{status}}</div>
         </template>
-        <template is="dom-if" if="{{!isCompleted(item.status)}}">
+        <template is="dom-if" if="{{!isCompleted(status)}}">
           <paper-progress class="flex" value="{{value}}"></paper-progress>
         </template>
         <span class="flex icon-group">
-          <template is="dom-if" if="{{isCompleted(item.status)}}">
+          <template is="dom-if" if="{{isCompleted(status)}}">
             <paper-icon-button id="folder" icon="icons:folder-open" on-click="_fireShow" class="buttons-small" alt="Show in Folder"></paper-icon-button>
             <paper-tooltip for="folder" offset="0">Show in Folder</paper-tooltip>
           </template>
-          <template is="dom-if" if="{{isFailed(item.status)}}">
+          <template is="dom-if" if="{{isFailed(status)}}">
             <paper-icon-button id="retry" icon="icons:refresh" on-click="_fireRetry" class="buttons-small" alt="Retry"></paper-icon-button>
             <paper-tooltip for="retry" offset="0">Retry</paper-tooltip>
           </template>
-          <template is="dom-if" if="{{isDownloading(item.status)}}">
+          <template is="dom-if" if="{{isDownloading(status)}}">
             <paper-icon-button id="pause" icon="av:pause" on-click="_firePause" class="buttons-small" alt="pause"></paper-icon-button>
             <paper-tooltip for="pause" offset="0">Pause</paper-tooltip>
           </template>
-          <template is="dom-if" if="{{isPaused(item.status)}}">
+          <template is="dom-if" if="{{isPaused(status)}}">
             <paper-icon-button id="resume" icon="av:play-arrow" on-click="_fireResume" class="buttons-small" alt="resume"></paper-icon-button>
             <paper-tooltip for="resume" offset="0">Resume</paper-tooltip>
           </template>
-          <template is="dom-if" if="{{isDownloading(item.status)}}">
+          <template is="dom-if" if="{{isDownloading(status)}}">
             <paper-icon-button id="cancel" icon="icons:clear" on-click="_fireCancel" class="buttons-small" alt="Cancel"></paper-icon-button>
             <paper-tooltip for="cancel" offset="0">Cancel</paper-tooltip>
           </template>
-          <template is="dom-if" if="{{isPaused(item.status)}}">
+          <template is="dom-if" if="{{isPaused(status)}}">
             <paper-icon-button id="cancel" icon="icons:clear" on-click="_fireCancel" class="buttons-small" alt="Cancel"></paper-icon-button>
             <paper-tooltip for="cancel" offset="0">Cancel</paper-tooltip>
           </template>
@@ -241,13 +237,25 @@ Example:
         type: Number,
         value: function() {
           return 0;
-        }
+        },
+      },
 
+      /**'status' indicates the status of file at the backend -
+      * downloading, paused, failed etc
+      *
+      * @type {String}
+      */
+      status: {
+        type: String,
+        notify: true,
+        value: function() {
+          return 0;
+        },
       },
 
       /**
-       * Describes the item that is being downloaded with file name, id, url,
-       * icon image and its status.
+       * Describes the item that is being downloaded with file name, id, url
+       * and its icon image.
        *
        * @type {Object}
        */
@@ -330,27 +338,24 @@ Example:
       //
       // This is the point where you should make modifications to the DOM (when
       // necessary), or kick off any processes the element wants to perform.
-      this.addEventListener("item-changed",function() {
-        if(this.item.status=="Completed"){
-          var container  = document.querySelector("paper-material") ;
+      this.addEventListener("status-changed",function() {
+        var container = document.querySelector("paper-material");
+        if(this.status=="Completed"){
           container.classList.remove("container-failed");
           container.setAttribute("elevation", 1);
           document.querySelector(".name").style["text-decoration"] = "none";
         }
-        else if(this.item.status=="Paused") {
-          var container  = document.querySelector("paper-material") ;
+        else if(this.status=="Paused") {
           container.classList.remove("container-failed");
           container.setAttribute("elevation", 1);
           document.querySelector(".name").style["text-decoration"] = "none";
         }
-        else if(this.item.status=="Downloading") {
-          var container  = document.querySelector("paper-material") ;
+        else if(this.status=="Downloading") {
           container.classList.remove("container-failed");
           container.setAttribute("elevation", 1);
           document.querySelector(".name").style["text-decoration"] = "none";
         }
-        else if(this.item.status=="Failed"||this.item.status=="Canceled") {
-          var container  = document.querySelector("paper-material");
+        else if(this.status=="Failed"||this.status=="Cancelled") {
           container.classList.add("container-failed");
           container.setAttribute("elevation", 0);
           document.querySelector(".name").style["text-decoration"] = "line-through";
@@ -381,7 +386,11 @@ Example:
      * @return
      */
     paused: function() {
-
+      this.status="Paused";
+      var container = document.querySelector("paper-material");
+      container.classList.remove("container-failed");
+      container.setAttribute("elevation", 1);
+      document.querySelector(".name").style["text-decoration"] = "none";
     },
 
     /**
@@ -391,7 +400,11 @@ Example:
      * @return
      */
     resumed: function() {
-
+      this.status="Downloading";
+      var container = document.querySelector("paper-material");
+      container.classList.remove("container-failed");
+      container.setAttribute("elevation", 1);
+      document.querySelector(".name").style["text-decoration"] = "none";
     },
 
     /**
@@ -401,7 +414,11 @@ Example:
      * @return
      */
     completed: function() {
-
+      this.status="Completed";
+      var container = document.querySelector("paper-material");
+      container.classList.remove("container-failed");
+      container.setAttribute("elevation", 1);
+      document.querySelector(".name").style["text-decoration"] = "none";
     },
 
     /**
@@ -411,17 +428,25 @@ Example:
      * @return
      */
     failed: function() {
-
+      this.status="Failed";
+      var container = document.querySelector("paper-material");
+      container.classList.add("container-failed");
+      container.setAttribute("elevation", 0);
+      document.querySelector(".name").style["text-decoration"] = "line-through";
     },
 
     /**
-     * Call this method when the item download is canceled
+     * Call this method when the item download is cancelled
      *
      * @param
      * @return
      */
-    canceled: function() {
-
+    cancelled: function() {
+      this.status="Cancelled";
+      var container = document.querySelector("paper-material");
+      container.classList.add("container-failed");
+      container.setAttribute("elevation", 0);
+      document.querySelector(".name").style["text-decoration"] = "line-through";
     },
 
 
@@ -468,7 +493,7 @@ Example:
      * @fires show
      */
     _fireShow: function() {
-      if(this.item.status==="Complete") {
+      if(this.status=="Completed") {
         this.fire('show', {show: true});
       }
     },
@@ -517,7 +542,7 @@ Example:
      * @fires cancel
      */
     _fireCancel: function() {
-      this.fire('cancel', {remove: true});
+      this.fire('cancel', {cancel: true});
     },
 
     /**
@@ -532,8 +557,8 @@ Example:
      * @fires open
      */
     _fireOpen: function() {
-      if(this.item.status==="Complete") {
-        this.fire('open', {remove: true});
+      if(this.status=="Completed") {
+        this.fire('open', {open: true});
       }
     },
 

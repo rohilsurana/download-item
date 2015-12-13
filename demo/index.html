@@ -1,20 +1,21 @@
 <!doctype html>
 <!--
 @license
-Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
-This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
-The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
-The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
-Code distributed by Google as part of the polymer project is also
-subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+MIT
 -->
 <html>
   <head>
+    <title>Demo - download-item</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
     <title>download-item Demo</title>
     <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
     <link rel="import" href="../download-item.html">
+    <style>
+      body {
+        background-color: rgb(230, 230, 230);
+      }
+    </style>
   </head>
   <body>
 
@@ -22,32 +23,36 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <button id="start">Start Download</button>
     <button id="fail">Fail Download</button>
-    <!-- <button >Start</button> -->
 
     <download-item
-      item='{"id":"XhTNgjCGf",
-            "filename":"SomeFile",
-            "url":"http://link.co/",
-            "status":"Completed",
-            "image":"../img/folder.png"}'></download-item>
+      status = 'Downloading'
+      item = '{"id":"XhTNgjCGf",
+              "filename":"SomeFile",
+              "url":"http://link.co/",
+              "image":"../img/folder.png"}'></download-item>
+
+      <div id="event"></div>
 
     <script>
       // As this doesn't actually have any backend we are just going to
       // increment it like this
       var downloading = 0;
+      var time;
       var item = document.querySelector('download-item');
       function changeItemStatus(status, isDownloading) {
-        itemObject.status = status;
+        item.setAttribute('status', status);
         downloading = isDownloading;
-        document.querySelector('download-item')
-          .setAttribute("item", JSON.stringify(itemObject));
+      }
+      function changeEventLabel(label) {
+        clearTimeout(time);
+        document.querySelector("#event").innerHTML = label;
+        time = setTimeout(function(){ document.querySelector("#event").innerHTML =""; }, 2000);
       }
       function startDownload()
       {
         if(downloading)
         {
           if((item.getAttribute('value')<100)) {
-            console.log(item.getAttribute('value'));
             item.setAttribute('value',parseInt(item.getAttribute('value'))+1);
             setTimeout(function(){startDownload();},30);
           }
@@ -56,16 +61,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           }
         }
       }
-      var itemObject = {id:"XhTNgjCGf", filename:"SomeFile", url:"http://link.co/", status:"Downloading", image:"../img/folder.png"};
-      function changeItemStatus(status, isDownloading) {
-        itemObject.status = status;
-        downloading = isDownloading;
-        item.setAttribute("item", JSON.stringify(itemObject));
-      }
       document.querySelector('#start').addEventListener('click', function() {
         changeItemStatus("Downloading", 1);
         item.setAttribute("value", 0);
-          startDownload();
+        startDownload();
       });
       document.querySelector('#fail').addEventListener('click', function() {
         changeItemStatus("Failed", 0);
@@ -73,20 +72,31 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       item.addEventListener('resume', function() {
         changeItemStatus("Downloading", 1);
         startDownload();
+        changeEventLabel("Download resumed");
       });
       item.addEventListener('pause', function() {
         changeItemStatus("Paused", 0);
+        changeEventLabel("Download paused");
       });
       item.addEventListener('cancel', function() {
-        changeItemStatus("Canceled", 0);
+        changeItemStatus("Cancelled", 0);
+        changeEventLabel("Download cancelled");
       });
       item.addEventListener('retry', function() {
         changeItemStatus("Downloading", 1);
         startDownload();
+        changeEventLabel("Retrying...");
       });
       item.addEventListener('remove', function() {
         downloading = 0;
         item.parentNode.removeChild(item);
+        changeEventLabel("Remove the download");
+      });
+      item.addEventListener('show', function() {
+        changeEventLabel("Show in Folder");
+      });
+      item.addEventListener('open', function() {
+        changeEventLabel("Open download");
       });
     </script>
 
