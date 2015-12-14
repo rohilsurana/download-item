@@ -1,0 +1,104 @@
+<!doctype html>
+<!--
+@license
+MIT
+-->
+<html>
+  <head>
+    <title>Demo - download-item</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+    <title>download-item Demo</title>
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <link rel="import" href="../download-item.html">
+    <style>
+      body {
+        background-color: rgb(230, 230, 230);
+      }
+    </style>
+  </head>
+  <body>
+
+    <p>An example of <code>&lt;download-item&gt;</code>:</p>
+
+    <button id="start">Start Download</button>
+    <button id="fail">Fail Download</button>
+
+    <download-item
+      status = 'Downloading'
+      id = 'XhTNgjCGf'
+      item = '{"filename":"SomeFile",
+              "url":"http://link.co/",
+              "image":"../img/folder.png"}'></download-item>
+
+      <div id="event"></div>
+
+    <script>
+      // As this doesn't actually have any backend we are just going to
+      // increment it like this
+      var downloading = 0;
+      var time;
+      var item = document.querySelector('download-item');
+      function changeItemStatus(status, isDownloading) {
+        item.setAttribute('status', status);
+        downloading = isDownloading;
+      }
+      function changeEventLabel(label) {
+        clearTimeout(time);
+        document.querySelector("#event").innerHTML = label;
+        time = setTimeout(function(){ document.querySelector("#event").innerHTML =""; }, 2000);
+      }
+      function startDownload()
+      {
+        if(downloading)
+        {
+          if((item.getAttribute('value')<100)) {
+            item.setAttribute('value',parseInt(item.getAttribute('value'))+1);
+            setTimeout(function(){startDownload();},30);
+          }
+          else {
+            changeItemStatus("Completed", 0);
+          }
+        }
+      }
+      document.querySelector('#start').addEventListener('click', function() {
+        changeItemStatus("Downloading", 1);
+        item.setAttribute("value", 0);
+        startDownload();
+      });
+      document.querySelector('#fail').addEventListener('click', function() {
+        changeItemStatus("Failed", 0);
+      });
+      item.addEventListener('resume', function() {
+        changeItemStatus("Downloading", 1);
+        startDownload();
+        changeEventLabel("Download resumed");
+      });
+      item.addEventListener('pause', function() {
+        changeItemStatus("Paused", 0);
+        changeEventLabel("Download paused");
+      });
+      item.addEventListener('cancel', function() {
+        changeItemStatus("Cancelled", 0);
+        changeEventLabel("Download cancelled");
+      });
+      item.addEventListener('retry', function() {
+        changeItemStatus("Downloading", 1);
+        startDownload();
+        changeEventLabel("Retrying...");
+      });
+      item.addEventListener('remove', function() {
+        downloading = 0;
+        item.parentNode.removeChild(item);
+        changeEventLabel("Remove the download");
+      });
+      item.addEventListener('show', function() {
+        changeEventLabel("Show in Folder");
+      });
+      item.addEventListener('open', function() {
+        changeEventLabel("Open download");
+      });
+    </script>
+
+  </body>
+</html>

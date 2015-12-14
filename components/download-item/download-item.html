@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<!--
+@license
+MIT
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../font-roboto/roboto.html">
+<link rel="import" href="../iron-icons/av-icons.html">
+<link rel="import" href="../iron-icons/iron-icons.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-tooltip/paper-tooltip.html">
+<link rel="import" href="../paper-tooltip/paper-tooltip.html">
+<link rel="import" href="../paper-material/paper-material.html">
+<link rel="import" href="../paper-progress/paper-progress.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+
+<!--
+Provides a ui and controls like pause, resume and retry for a item downloading
+in the backend whose progress is maintained by regular updates from the backend
+to the 'value' property. For controls, events are emitted by the component
+whic can be used to attach listeners for controlling downloading in the backend.
+
+Example:
+
+    <download-item
+      status = 'Downloading'
+      id = 'XhTNgjCGf'
+      item = '{"filename":"SomeFile",
+              "url":"http://link.co/",
+              "image":"../img/folder.png"}'></download-item>
+
+@demo
+-->
+<dom-module id="download-item">
+
+  <style>
+    :host {
+      display: block;
+      box-sizing: border-box;
+    }
+
+  </style>
+
+  <template>
+    <style >
+      .container {
+        border-radius: 2px;
+        display: flex;
+        flex: none;
+        width: 622px;
+        min-height: 103px;
+        margin: 16px auto;
+        background-color: #fff;
+        font-family: 'Roboto', sans-serif;
+      }
+
+      .container-failed {
+        filter: grayscale(1);
+        -webkit-filter: grayscale(1);
+      }
+
+      .icon-wrapper {
+        align-self: center;
+        flex: none;
+        justify-content: center;
+        margin: 0 24px;
+      }
+
+      .details {
+        border-left: 1px #d8d8d8 solid;
+        padding-right: 16px;
+        padding-left: 24px;
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        padding-bottom: 8px;
+        padding-top: 16px;
+      }
+
+      .remove-wrapper {
+        align-self: flex-start;
+        margin: 0;
+      }
+
+      .icon {
+        height: 32px;
+        width: 32px;
+      }
+
+      paper-progress {
+        width: auto;
+        margin-top: 16px;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .action {
+        direction: ltr;
+        display: flex;
+        flex-basis: auto;
+        flex-grow: 0;
+        flex-shrink: 0;
+        font-family: Roboto;
+        font-size: 13px;
+        width: 622px;
+        direction: ltr;
+      }
+
+      .buttons-small {
+        width: 36px;
+        height: 36px;
+        padding: 8px;
+      }
+
+      .title-area {
+        display: block;
+      }
+
+      .name {
+        font-family: Roboto;
+        font-size: 13px;
+        font-weight: 500;
+        color: cornflowerblue;
+        text-decoration: none;
+        max-width: 100%;
+        width: auto;
+        word-break: break-all;
+      }
+
+      .url {
+        font-family: Roboto;
+        font-size: 13px;
+        color: rgb(90, 90, 90);
+        margin-top: 6px;
+        overflow: hidden;
+        text-decoration: none;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .tag {
+        color: rgb(90, 90, 90);
+        font-family: Roboto;
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .description {
+        color: rgb(90, 90, 90);
+        display: block;
+        font-family: Roboto;
+        font-size: 13px;
+        margin-top: 16px;
+      }
+
+      .icon-group {
+        margin-left: -10px;
+      }
+
+    </style>
+    <paper-material class="container">
+      <div class="icon-wrapper">
+        <img class="icon" src="{{item.image}}">
+      </div>
+      <div class="details layout vertical flex">
+        <div class="title-area">
+          <span class="flex name" on-click="_fireOpen">
+            <a class="name" href="#">{{item.filename}}</a>
+          </span>
+          <template is="dom-if" if="{{isFailed(status)}}">
+            <span class="tag">{{status}}</span>
+          </template>
+        </div>
+        <a href="{{item.url}}" class="url">{{item.url}}</a>
+        <!-- TODO: Add description below like speed etc. -->
+        <template is="dom-if" if="{{isDownloading(status)}}">
+          <div class="description">{{status}}</div>
+        </template>
+        <template is="dom-if" if="{{isPaused(status)}}">
+          <div class="description">{{status}}</div>
+        </template>
+        <template is="dom-if" if="{{!isCompleted(status)}}">
+          <paper-progress class="flex" value="{{value}}"></paper-progress>
+        </template>
+        <span class="flex icon-group">
+          <template is="dom-if" if="{{isCompleted(status)}}">
+            <paper-icon-button id="folder" icon="icons:folder-open" on-click="_fireShow" class="buttons-small" alt="Show in Folder"></paper-icon-button>
+            <paper-tooltip for="folder" offset="0">Show in Folder</paper-tooltip>
+          </template>
+          <template is="dom-if" if="{{isFailed(status)}}">
+            <paper-icon-button id="retry" icon="icons:refresh" on-click="_fireRetry" class="buttons-small" alt="Retry"></paper-icon-button>
+            <paper-tooltip for="retry" offset="0">Retry</paper-tooltip>
+          </template>
+          <template is="dom-if" if="{{isDownloading(status)}}">
+            <paper-icon-button id="pause" icon="av:pause" on-click="_firePause" class="buttons-small" alt="pause"></paper-icon-button>
+            <paper-tooltip for="pause" offset="0">Pause</paper-tooltip>
+          </template>
+          <template is="dom-if" if="{{isPaused(status)}}">
+            <paper-icon-button id="resume" icon="av:play-arrow" on-click="_fireResume" class="buttons-small" alt="resume"></paper-icon-button>
+            <paper-tooltip for="resume" offset="0">Resume</paper-tooltip>
+          </template>
+          <template is="dom-if" if="{{isDownloading(status)}}">
+            <paper-icon-button id="cancel" icon="icons:clear" on-click="_fireCancel" class="buttons-small" alt="Cancel"></paper-icon-button>
+            <paper-tooltip for="cancel" offset="0">Cancel</paper-tooltip>
+          </template>
+          <template is="dom-if" if="{{isPaused(status)}}">
+            <paper-icon-button id="cancel" icon="icons:clear" on-click="_fireCancel" class="buttons-small" alt="Cancel"></paper-icon-button>
+            <paper-tooltip for="cancel" offset="0">Cancel</paper-tooltip>
+          </template>
+        </span>
+      </div>
+      <div class="remove-wrapper icon-wrapper">
+        <paper-icon-button id="remove" on-click="_fireRemove" class="remove buttons-small" icon="clear"></paper-icon-button>
+        <paper-tooltip for="remove" offset="0">Remove</paper-tooltip>
+      </div>
+    </paper-material>
+  </template>
+
+</dom-module>
+
+<script>
+
+  Polymer({
+
+    is: 'download-item',
+
+    properties: {
+
+      /**'id' indicates the status of file at the backend -
+      * downloading, paused, failed etc
+      *
+      * @type {String}
+      */
+      id: {
+        type: String,
+        value: function() {
+          return '';
+        },
+      },
+
+      /**'value' indicates the percentage of file that has been downloaded by the
+      * backend
+      *
+      * @type {Number}
+      */
+      value: {
+        type: Number,
+        value: function() {
+          return 0;
+        },
+      },
+
+      /**'status' indicates the status of file at the backend -
+      * downloading, paused, failed etc
+      *
+      * @type {String}
+      */
+      status: {
+        type: String,
+        notify: true,
+        value: function() {
+          return '';
+        },
+      },
+
+      /**
+       * Describes the item that is being downloaded with file name, id, url
+       * and its icon image.
+       *
+       * @type {Object}
+       */
+      item: {
+        type: Object,
+        notify: true,
+        value: function() {
+          return {};
+        },
+      },
+
+    },
+
+    /**
+     * Checks the status and replies if status is completed
+     *
+     * @param {String} status of the download item.
+     * @return {Boolean} is the download completed.
+     */
+    isCompleted: function(status) {
+      if(status==="Completed") {
+        return true;
+      }
+      else {
+        return false;
+      }
+    },
+
+    /**
+     * Checks the status and replies if status is failed
+     *
+     * @param {String} status of the download item.
+     * @return {Boolean} is the download failed.
+     */
+    isFailed: function(status) {
+      if(status=="Failed"||status=="Canceled") {
+        return true;
+      }
+      else {
+        return false;
+      }
+    },
+
+    /**
+     * Checks the status and replies if status is paused
+     *
+     * @param {String} status of the download item.
+     * @return {Boolean} is the download paused.
+     */
+    isPaused: function(status) {
+      if(status==="Paused") {
+        return true;
+      }
+      else {
+        return false;
+      }
+    },
+
+    /**
+     * Checks the status and replies if status is downloading
+     *
+     * @param {String} status of the download item.
+     * @return {Boolean} is the download downloading.
+     */
+    isDownloading: function(status) {
+      if(status==="Downloading") {
+        return true;
+      }
+      else {
+        return false;
+      }
+    },
+
+    // Element Lifecycle
+
+    ready: function() {
+      // `ready` is called after all elements have been configured, but
+      // propagates bottom-up. This element's children are ready, but parents
+      // are not.
+      //
+      // This is the point where you should make modifications to the DOM (when
+      // necessary), or kick off any processes the element wants to perform.
+      this.addEventListener("status-changed",function() {
+        var container = document.querySelector("paper-material");
+        if(this.status=="Completed"){
+          container.classList.remove("container-failed");
+          container.setAttribute("elevation", 1);
+          document.querySelector(".name").style["text-decoration"] = "none";
+        }
+        else if(this.status=="Paused") {
+          container.classList.remove("container-failed");
+          container.setAttribute("elevation", 1);
+          document.querySelector(".name").style["text-decoration"] = "none";
+        }
+        else if(this.status=="Downloading") {
+          container.classList.remove("container-failed");
+          container.setAttribute("elevation", 1);
+          document.querySelector(".name").style["text-decoration"] = "none";
+        }
+        else if(this.status=="Failed"||this.status=="Cancelled") {
+          container.classList.add("container-failed");
+          container.setAttribute("elevation", 0);
+          document.querySelector(".name").style["text-decoration"] = "line-through";
+        }
+      });
+    },
+
+    attached: function() {
+      // `attached` fires once the element and its parents have been inserted
+      // into a document.
+      //
+      // This is a good place to perform any work related to your element's
+      // visual state or active behavior (measuring sizes, beginning animations,
+      // loading resources, etc).
+    },
+
+    detached: function() {
+      // The analog to `attached`, `detached` fires when the element has been
+      // removed from a document.
+      //
+      // Use this to clean up anything you did in `attached`.
+    },
+
+    /**
+     * Call this method when the download is paused at backend
+     *
+     * @param
+     * @return
+     */
+    paused: function() {
+      this.status="Paused";
+      var container = document.querySelector("paper-material");
+      container.classList.remove("container-failed");
+      container.setAttribute("elevation", 1);
+      document.querySelector(".name").style["text-decoration"] = "none";
+    },
+
+    /**
+     * Call this method when the download is resumed
+     *
+     * @param
+     * @return
+     */
+    resumed: function() {
+      this.status="Downloading";
+      var container = document.querySelector("paper-material");
+      container.classList.remove("container-failed");
+      container.setAttribute("elevation", 1);
+      document.querySelector(".name").style["text-decoration"] = "none";
+    },
+
+    /**
+     * Call this method when the download is completed
+     *
+     * @param
+     * @return
+     */
+    completed: function() {
+      this.status="Completed";
+      var container = document.querySelector("paper-material");
+      container.classList.remove("container-failed");
+      container.setAttribute("elevation", 1);
+      document.querySelector(".name").style["text-decoration"] = "none";
+    },
+
+    /**
+     * Call this method when the item download is failed
+     *
+     * @param
+     * @return
+     */
+    failed: function() {
+      this.status="Failed";
+      var container = document.querySelector("paper-material");
+      container.classList.add("container-failed");
+      container.setAttribute("elevation", 0);
+      document.querySelector(".name").style["text-decoration"] = "line-through";
+    },
+
+    /**
+     * Call this method when the item download is cancelled
+     *
+     * @param
+     * @return
+     */
+    cancelled: function() {
+      this.status="Cancelled";
+      var container = document.querySelector("paper-material");
+      container.classList.add("container-failed");
+      container.setAttribute("elevation", 0);
+      document.querySelector(".name").style["text-decoration"] = "line-through";
+    },
+
+
+    /**
+     * Event to pause the item download and send the final
+     * progress value
+     *
+     * @event pause
+     * @property {{pause: Boolean}}
+     */
+    /**
+    * Fires pause event
+    *
+    * @fires pause
+    */
+    _firePause: function() {
+      this.fire('pause', {pause: true});
+    },
+
+    /**
+     * Event to resume the item download
+     *
+     * @event resume
+     * @property {{resume: Boolean}}
+     */
+     /**
+     * Fires resume event
+     *
+     * @fires resume
+     */
+    _fireResume: function() {
+      this.fire('resume', {resume: true});
+    },
+
+    /**
+     * Event to open the item after download completed
+     *
+     * @event show
+     * @property {{show: Boolean}}
+     */
+     /**
+     * Fires show event if download is complete
+     *
+     * @fires show
+     */
+    _fireShow: function() {
+      if(this.status=="Completed") {
+        this.fire('show', {show: true});
+      }
+    },
+
+    /**
+     * Event to retry failed item download
+     *
+     * @event retry
+     * @property {{retry: Boolean}}
+     */
+     /**
+     * Fires retry event
+     *
+     * @fires retry
+     */
+    _fireRetry: function() {
+      this.fire('retry', {retry: true});
+    },
+
+    /**
+     * Event to remove this item download from page
+     * and backend
+     *
+     * @event remove
+     * @property {{remove: Boolean}}
+     */
+     /**
+     * Fires remove event
+     *
+     * @fires remove
+     */
+    _fireRemove: function() {
+      this.fire('remove', {remove: true});
+    },
+
+    /**
+     * Event to cancel this item download from page
+     * and backend
+     *
+     * @event cancel
+     * @property {{cancel: Boolean}}
+     */
+     /**
+     * Fires cancel event
+     *
+     * @fires cancel
+     */
+    _fireCancel: function() {
+      this.fire('cancel', {cancel: true});
+    },
+
+    /**
+     * Event to open the item linked to this item
+     *
+     * @event open
+     * @property {{open: Boolean}}
+     */
+     /**
+     * Fires open event only if status is set to completed
+     *
+     * @fires open
+     */
+    _fireOpen: function() {
+      if(this.status=="Completed") {
+        this.fire('open', {open: true});
+      }
+    },
+
+
+  });
+
+</script>

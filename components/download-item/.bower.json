@@ -1,0 +1,46 @@
+{
+  "name": "download-item",
+  "authors": [
+    "Rohil Surana <rohilsurana96@gmail.com>"
+  ],
+  "description": "Provides a ui and controls like pause, resume and retry for a item downloading in the backend",
+  "keywords": [
+    "web-component",
+    "chrome",
+    "inspired",
+    "paper",
+    "material",
+    "download",
+    "item"
+  ],
+  "main": "download-item.html",
+  "license": "MIT",
+  "homepage": "https://github.com/rohilsurana/download-item/",
+  "ignore": [
+    "/.*",
+    "node_modules",
+    "bower_components",
+    "/test/",
+    "/demo/"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.0.0",
+    "paper-tooltip": "PolymerElements/paper-tooltip#~1.1.1",
+    "paper-icon-button": "PolymerElements/paper-icon-button#~1.0.5",
+    "paper-progress": "PolymerElements/paper-progress#~1.0.7"
+  },
+  "devDependencies": {
+    "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
+    "web-component-tester": "*"
+  },
+  "_release": "6de2071842",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "6de207184206bc5f2933c648c8ff3e4f772233c2"
+  },
+  "_source": "git://github.com/rohilsurana/download-item.git",
+  "_target": "master",
+  "_originalSource": "rohilsurana/download-item",
+  "_direct": true
+}
