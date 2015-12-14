@@ -24,8 +24,8 @@ Example:
 
     <download-item
       status = 'Downloading'
-      item = '{"id":"XhTNgjCGf",
-              "filename":"SomeFile",
+      id = 'XhTNgjCGf'
+      item = '{"filename":"SomeFile",
               "url":"http://link.co/",
               "image":"../img/folder.png"}'></download-item>
 
@@ -228,6 +228,18 @@ Example:
 
     properties: {
 
+      /**'id' indicates the status of file at the backend -
+      * downloading, paused, failed etc
+      *
+      * @type {String}
+      */
+      id: {
+        type: String,
+        value: function() {
+          return '';
+        },
+      },
+
       /**'value' indicates the percentage of file that has been downloaded by the
       * backend
       *
@@ -249,7 +261,7 @@ Example:
         type: String,
         notify: true,
         value: function() {
-          return 0;
+          return '';
         },
       },
 
